@@ -39,7 +39,7 @@ check_docker() {
 
 # Function to check if ports are available
 check_ports() {
-    local ports=(3000 9090 16686 9093 3100)
+    local ports=(3000 9090 9093 9100)
     local unavailable_ports=()
     
     for port in "${ports[@]}"; do
@@ -117,11 +117,12 @@ show_status() {
     
     echo
     print_status "Service URLs:"
-    echo -e "  ${GREEN}Grafana:${NC}      http://localhost:3000 (admin/admin)"
+    echo -e "  ${GREEN}Grafana:${NC}      http://localhost:3001 (admin/admin)"
     echo -e "  ${GREEN}Prometheus:${NC}   http://localhost:9090"
-    echo -e "  ${GREEN}Jaeger:${NC}       http://localhost:16686"
     echo -e "  ${GREEN}Alertmanager:${NC} http://localhost:9093"
-    echo -e "  ${GREEN}Loki:${NC}         http://localhost:3100"
+    echo -e "  ${GREEN}Node Exporter:${NC} http://localhost:9100"
+    echo -e "  ${GREEN}Your Backend:${NC} http://localhost:8080"
+    echo -e "  ${GREEN}Your Frontend:${NC} http://localhost:3000 (when started)"
 }
 
 # Function to show logs
@@ -159,14 +160,13 @@ check_health() {
     print_status "Checking service health..."
     
     local services=(
-        "http://localhost:3000/api/health"  # Grafana
+        "http://localhost:3001/api/health"  # Grafana (moved to 3001)
         "http://localhost:9090/-/healthy"   # Prometheus
-        "http://localhost:16686/"           # Jaeger
         "http://localhost:9093/-/healthy"   # Alertmanager
-        "http://localhost:3100/ready"       # Loki
+        "http://localhost:9100/metrics"     # Node Exporter
     )
     
-    local service_names=("Grafana" "Prometheus" "Jaeger" "Alertmanager" "Loki")
+    local service_names=("Grafana" "Prometheus" "Alertmanager" "Node Exporter")
     local all_healthy=true
     
     for i in "${!services[@]}"; do

@@ -1,0 +1,194 @@
+{
+  "id": null,
+  "title": "ZaraLive Voice AI Dashboard",
+  "tags": ["zaralive", "voice-ai", "performance"],
+  "style": "dark",
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Voice AI Pipeline Performance",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "zaralive_voice_turns_total",
+          "legendFormat": "Total Voice Turns"
+        },
+        {
+          "expr": "zaralive_asr_requests_total",
+          "legendFormat": "ASR Requests"
+        },
+        {
+          "expr": "zaralive_llm_requests_total",
+          "legendFormat": "LLM Requests"
+        },
+        {
+          "expr": "zaralive_tts_requests_total",
+          "legendFormat": "TTS Requests"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "displayMode": "list"
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Voice Turn Success Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(zaralive_voice_turns_total{status=\"success\"}[5m])",
+          "legendFormat": "Successful Voice Turns"
+        },
+        {
+          "expr": "rate(zaralive_voice_turns_total{status=\"error\"}[5m])",
+          "legendFormat": "Failed Voice Turns"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "yAxes": [
+        {
+          "label": "Voice Turns per Second",
+          "unit": "reqps"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "ASR Processing Time (95th percentile)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(zaralive_asr_duration_seconds_bucket[5m]))",
+          "legendFormat": "ASR Processing Time"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "yAxes": [
+        {
+          "label": "Duration (seconds)",
+          "unit": "s"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "LLM Token Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(zaralive_llm_tokens_total{type=\"input\"}[5m])",
+          "legendFormat": "Input Tokens"
+        },
+        {
+          "expr": "rate(zaralive_llm_tokens_total{type=\"output\"}[5m])",
+          "legendFormat": "Output Tokens"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "yAxes": [
+        {
+          "label": "Tokens per Second",
+          "unit": "tokensps"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "TTS Audio Generation Time",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(zaralive_tts_duration_seconds_bucket[5m]))",
+          "legendFormat": "TTS Generation Time"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "yAxes": [
+        {
+          "label": "Duration (seconds)",
+          "unit": "s"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Client-Side Metrics",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "zaralive_client_microphone_access_total{status=\"success\"}",
+          "legendFormat": "Microphone Access Success"
+        },
+        {
+          "expr": "zaralive_client_microphone_access_total{status=\"error\"}",
+          "legendFormat": "Microphone Access Errors"
+        },
+        {
+          "expr": "zaralive_client_webrtc_state_changes_total{connection_state=\"connected\"}",
+          "legendFormat": "WebRTC Connected"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 20 },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "displayMode": "list"
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Error Rate by Operation Type",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(zaralive_errors_total[5m])",
+          "legendFormat": "{{error_type}} - {{provider}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "yAxes": [
+        {
+          "label": "Errors per Second",
+          "unit": "errorsps"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Active Voice Sessions",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "zaralive_active_sessions",
+          "legendFormat": "Active Sessions"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "yAxes": [
+        {
+          "label": "Number of Sessions",
+          "unit": "short"
+        }
+      ]
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "10s"
+}

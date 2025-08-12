@@ -105,8 +105,8 @@ grafana-data/
 # Alertmanager data (persistent storage)
 alertmanager-data/
 
-# Loki data (persistent storage)
-loki-data/
+# Loki data (persistent storage) - removed from lean stack
+# loki-data/
 
 # Application logs
 *.log

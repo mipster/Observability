@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ZaraLive Project Integration Script
-# This script helps set up OpenTelemetry instrumentation in your main ZaraLive project
+# This script helps set up observability instrumentation in your main ZaraLive project
 
 set -e
 
@@ -47,7 +47,7 @@ cat > ZARALIVE_INTEGRATION.md << 'EOF'
 # ZaraLive Observability Integration Guide
 
 ## Overview
-This guide explains how to integrate your main ZaraLive project with the observability stack.
+This guide explains how to integrate your main ZaraLive project with the lean observability stack.
 
 ## Prerequisites
 1. The observability stack is running (use `./start.sh start`)
@@ -58,102 +58,131 @@ This guide explains how to integrate your main ZaraLive project with the observa
 ### 1. Install Dependencies
 ```bash
 cd /path/to/your/zaralive/project
-npm install @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-otlp-http
+npm install prom-client
 ```
 
-### 2. Create Telemetry Configuration
-Create `telemetry.js` in your project root:
-
-```javascript
-const { NodeSDK } = require('@opentelemetry/sdk-node');
-const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
-const { OTLPTraceExporter } = require('@opentelemetry/exporter-otlp-http');
-const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
-
-// Initialize OpenTelemetry
-const sdk = new NodeSDK({
-  traceExporter: new OTLPTraceExporter({
-    url: 'http://localhost:4318/v1/traces',
-  }),
-  metricExporter: new OTLPMetricExporter({
-    url: 'http://localhost:4318/v1/metrics',
-  }),
-  instrumentations: [getNodeAutoInstrumentations()],
-});
-
-sdk.start();
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  sdk.shutdown()
-    .then(() => console.log('Tracing terminated'))
-    .catch((error) => console.log('Error terminating tracing', error))
-    .finally(() => process.exit(0));
-});
-```
-
-### 3. Import in Your Main File
-Add this line at the very top of your main server file:
-```javascript
-require('./telemetry');
-```
-
-### 4. Expose Metrics Endpoint
+### 2. Expose Metrics Endpoint
 Add a metrics endpoint to your Express app:
 ```javascript
 const prometheus = require('prom-client');
 const register = prometheus.register;
 
+// Create some basic metrics
+const httpRequestDurationMicroseconds = new prometheus.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.1, 0.5, 1, 2, 5]
+});
+
+const httpRequestsTotal = new prometheus.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status_code']
+});
+
+// Middleware to collect metrics
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  res.on('finish', () => {
+    const duration = (Date.now() - start) / 1000;
+    httpRequestDurationMicroseconds
+      .labels(req.method, req.route?.path || req.path, res.statusCode)
+      .observe(duration);
+    
+    httpRequestsTotal
+      .labels(req.method, req.route?.path || req.path, res.statusCode)
+      .inc();
+  });
+  
+  next();
+});
+
+// Metrics endpoint
 app.get('/metrics', async (req, res) => {
   res.set('Content-Type', register.contentType);
   res.end(await register.metrics());
 });
 ```
 
-## Frontend Integration (React)
-
-### 1. Install Dependencies
-```bash
-npm install @opentelemetry/sdk-trace-web @opentelemetry/exporter-otlp-http
-```
-
-### 2. Create Telemetry Configuration
-Create `telemetry.js` in your src directory:
-
+### 3. Add Business Metrics (Optional)
 ```javascript
-import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-
-const provider = new WebTracerProvider();
-const exporter = new OTLPTraceExporter({
-  url: 'http://localhost:4318/v1/traces',
+// Custom business metrics
+const activeConnections = new prometheus.Gauge({
+  name: 'zaralive_active_connections',
+  help: 'Number of active voice connections'
 });
 
-provider.addSpanProcessor(new BatchSpanProcessor(exporter));
-provider.register();
+const voiceProcessingDuration = new prometheus.Histogram({
+  name: 'zaralive_voice_processing_duration_seconds',
+  help: 'Duration of voice processing in seconds',
+  buckets: [0.1, 0.5, 1, 2, 5, 10]
+});
 
-// Create a tracer
-export const tracer = provider.getTracer('zaralive-frontend');
+// Use in your business logic
+activeConnections.set(5); // Set current active connections
+voiceProcessingDuration.observe(2.5); // Record processing time
 ```
 
-### 3. Import in Your App
-Add this import to your main App.js or index.js:
+## Frontend Integration (React)
+
+### 1. Create a Simple Metrics Client
+Create `metrics.js` in your src directory:
+
 ```javascript
-import './telemetry';
+// Simple frontend metrics collection
+class FrontendMetrics {
+  constructor() {
+    this.metrics = {
+      pageViews: 0,
+      userInteractions: 0,
+      errors: 0
+    };
+  }
+
+  recordPageView(page) {
+    this.metrics.pageViews++;
+    this.sendMetric('page_view', { page });
+  }
+
+  recordUserInteraction(action) {
+    this.metrics.userInteractions++;
+    this.sendMetric('user_interaction', { action });
+  }
+
+  recordError(error) {
+    this.metrics.errors++;
+    this.sendMetric('frontend_error', { error: error.message });
+  }
+
+  sendMetric(type, data) {
+    // Send to your backend /metrics endpoint or a separate metrics endpoint
+    fetch('/api/metrics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data, timestamp: Date.now() })
+    }).catch(console.error);
+  }
+}
+
+export const metrics = new FrontendMetrics();
 ```
 
-### 4. Use Tracing in Components
+### 2. Use in Your App
 ```javascript
-import { tracer } from './telemetry';
+import { metrics } from './metrics';
 
 function MyComponent() {
-  const span = tracer.startSpan('MyComponent.render');
+  useEffect(() => {
+    metrics.recordPageView('MyComponent');
+  }, []);
   
-  // Your component logic here
+  const handleClick = () => {
+    metrics.recordUserInteraction('button_click');
+  };
   
-  span.end();
-  return <div>...</div>;
+  return <button onClick={handleClick}>Click me</button>;
 }
 ```
 
@@ -173,37 +202,30 @@ npm start
 ### 3. Generate Some Traffic
 - Make some API calls
 - Navigate through your frontend
-- Check the metrics and traces
+- Check the metrics endpoint
 
 ### 4. Verify in Observability Tools
 - **Prometheus**: http://localhost:9090 (check targets)
-- **Jaeger**: http://localhost:16686 (look for traces)
-- **Grafana**: http://localhost:3000 (view dashboards)
+- **Grafana**: http://localhost:3001 (view dashboards)
+- **Alertmanager**: http://localhost:9093 (configure alerts)
 
 ## Troubleshooting
 
 ### No Metrics Appearing
 - Check if `/metrics` endpoint is accessible
 - Verify Prometheus targets in http://localhost:9090/targets
-- Check application logs for telemetry errors
-
-### No Traces Appearing
-- Verify OTLP endpoint is accessible
-- Check Jaeger collector logs: `./start.sh logs jaeger`
-- Ensure telemetry is imported before other modules
+- Check application logs for errors
 
 ### Port Conflicts
-- Check if ports 3000, 3001 are available
-- Modify config.env if needed
+- Check if ports 3000, 3001, 8080, 9090, 9093, 9100 are available
 - Use `./start.sh status` to check current services
 
 ## Next Steps
 
 1. **Custom Metrics**: Add business-specific metrics
-2. **Custom Traces**: Instrument key business flows
-3. **Alerts**: Configure custom alerting rules
-4. **Dashboards**: Create custom Grafana dashboards
-5. **Log Correlation**: Add trace IDs to your logs
+2. **Alerts**: Configure custom alerting rules in Prometheus
+3. **Dashboards**: Create custom Grafana dashboards
+4. **Log Correlation**: Add request IDs to your logs
 
 ## Support
 
@@ -245,18 +267,25 @@ else
     echo "❌ Prometheus is not responding"
 fi
 
-# Test Jaeger
-if curl -s http://localhost:16686/ > /dev/null; then
-    echo "✅ Jaeger UI is accessible"
-else
-    echo "❌ Jaeger UI is not responding"
-fi
-
 # Test Grafana
-if curl -s http://localhost:3000/api/health > /dev/null; then
+if curl -s http://localhost:3001/api/health > /dev/null; then
     echo "✅ Grafana is healthy"
 else
     echo "❌ Grafana is not responding"
+fi
+
+# Test Alertmanager
+if curl -s http://localhost:9093/-/healthy > /dev/null; then
+    echo "✅ Alertmanager is healthy"
+else
+    echo "❌ Alertmanager is not responding"
+fi
+
+# Test Node Exporter
+if curl -s http://localhost:9100/metrics > /dev/null; then
+    echo "✅ Node Exporter is responding"
+else
+    echo "❌ Node Exporter is not responding"
 fi
 
 echo
@@ -264,8 +293,8 @@ echo "🎯 Next steps:"
 echo "1. Follow the integration guide in ZARALIVE_INTEGRATION.md"
 echo "2. Start your ZaraLive application"
 echo "3. Check metrics in Prometheus: http://localhost:9090"
-echo "4. View dashboards in Grafana: http://localhost:3000"
-echo "5. Search traces in Jaeger: http://localhost:16686"
+echo "4. View dashboards in Grafana: http://localhost:3001"
+echo "5. Configure alerts in Alertmanager: http://localhost:9093"
 EOF
 
 chmod +x test-integration.sh
