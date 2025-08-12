@@ -1,0 +1,42 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: zaralive-app-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: zaralive-app
+          __path__: /var/log/zaralive/*.log
+
+  - job_name: zaralive-frontend-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: zaralive-frontend
+          __path__: /var/log/zaralive-frontend/*.log
+
+  - job_name: system-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          __path__: /var/log/syslog
+
+  - job_name: docker-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/lib/docker/containers/*/*-json.log
