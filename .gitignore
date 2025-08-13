@@ -1,91 +1,22 @@
-# ZaraLive Observability Stack .gitignore
+# Persistent data directories
+*-data/
+loki-data/
+minio-data/
+prometheus-data/
+grafana-data/
+alertmanager-data/
 
-# Docker and Docker Compose
-.dockerignore
-docker-compose.override.yml
-docker-compose.*.yml
-!docker-compose.yml
-
-# Environment files (may contain sensitive data)
+# Environment files
 .env
 .env.local
 .env.*.local
-.env.production
-.env.staging
-config.env
 
 # Logs
-logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+logs/
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
+# Node modules (if any)
 node_modules/
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env.test
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# Editor directories and files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
 
 # OS generated files
 .DS_Store
@@ -96,134 +27,13 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# Prometheus data (persistent storage)
-prometheus-data/
-
-# Grafana data (persistent storage)
-grafana-data/
-
-# Alertmanager data (persistent storage)
-alertmanager-data/
-
-# Loki data (persistent storage) - removed from lean stack
-# loki-data/
-
-# Application logs
-*.log
-logs/
-
-# Test files
-test-results/
-coverage/
-
-# Backup files
-*.bak
-*.backup
-*.old
-
-# Certificate files
-*.pem
-*.key
-*.crt
-*.csr
-
-# Configuration overrides
-config.local.*
-*.local.yml
-*.local.yaml
-
-# Monitoring data exports
-exports/
-backups/
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # Temporary files
 *.tmp
 *.temp
-.tmp/
-.temp/
-
-# Archive files
-*.tar
-*.tar.gz
-*.zip
-*.rar
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Cache directories
-.cache/
-cache/
-
-# Build artifacts
-build/
-dist/
-out/
-
-# Package manager files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Local development files
-.local/
-local/
-
-# Secrets and credentials
-secrets/
-credentials/
-*.secret
-*.key
-*.pem
-*.p12
-*.pfx
-
-# Terraform files (if using infrastructure as code)
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-
-# Kubernetes files (if using K8s)
-*.kubeconfig
-kubeconfig
-
-# Helm charts (if using Helm)
-charts/
-*.tgz
-
-# Ansible files (if using Ansible)
-*.retry
-
-# Vagrant files (if using Vagrant)
-.vagrant/
-
-# Virtual machine files
-*.vmdk
-*.vdi
-*.vbox
-
-# Backup and archive files
-backup/
-archive/
-*.backup
-*.bak
-*.old
-*.orig
-
-# System files
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msm
-*.msp
-
-# Application specific
-# Add any ZaraLive specific patterns here
-zaralive-logs/
-app-logs/

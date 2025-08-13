@@ -1,0 +1,79 @@
+groups:
+  - name: endpoint-monitoring
+    rules:
+      # Alert when transcript endpoint is down
+      - alert: TranscriptEndpointDown
+        expr: probe_success{job="blackbox-transcript-endpoint"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: transcript-endpoint
+        annotations:
+          summary: 'Transcript endpoint is down'
+          description: 'The transcript endpoint at {{ $labels.instance }} has been down for more than 1 minute.'
+
+      # Alert when transcript endpoint is slow
+      - alert: TranscriptEndpointSlow
+        expr: probe_duration_seconds{job="blackbox-transcript-endpoint"} > 2
+        for: 2m
+        labels:
+          severity: warning
+          service: transcript-endpoint
+        annotations:
+          summary: 'Transcript endpoint is slow'
+          description: 'The transcript endpoint at {{ $labels.instance }} is responding slowly ({{ $value }}s).'
+
+      # Alert when any monitored endpoint is down
+      - alert: EndpointDown
+        expr: probe_success{job="blackbox"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: '{{ $labels.instance }}'
+        annotations:
+          summary: 'Endpoint {{ $labels.instance }} is down'
+          description: 'The endpoint {{ $labels.instance }} has been down for more than 1 minute.'
+
+      # Alert when endpoints are slow
+      - alert: EndpointSlow
+        expr: probe_duration_seconds{job="blackbox"} > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: '{{ $labels.instance }}'
+        annotations:
+          summary: 'Endpoint {{ $labels.instance }} is slow'
+          description: 'The endpoint {{ $labels.instance }} is responding slowly ({{ $value }}s).'
+
+      # Alert when Blackbox Exporter itself is down
+      - alert: BlackboxExporterDown
+        expr: up{job="blackbox-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: blackbox-exporter
+        annotations:
+          summary: 'Blackbox Exporter is down'
+          description: 'The Blackbox Exporter has been down for more than 1 minute.'
+
+      # Alert when endpoint returns non-2xx status
+      - alert: EndpointNon2xxStatus
+        expr: probe_http_status_code{job="blackbox"} > 299
+        for: 1m
+        labels:
+          severity: warning
+          service: '{{ $labels.instance }}'
+        annotations:
+          summary: 'Endpoint {{ $labels.instance }} returned non-2xx status'
+          description: 'The endpoint {{ $labels.instance }} returned status code {{ $value }}.'
+
+      # Alert when SSL certificate is about to expire (if using HTTPS)
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox"} - time() < 86400 * 30
+        for: 1m
+        labels:
+          severity: warning
+          service: '{{ $labels.instance }}'
+        annotations:
+          summary: 'SSL certificate expiring soon for {{ $labels.instance }}'
+          description: 'The SSL certificate for {{ $labels.instance }} will expire in less than 30 days.'

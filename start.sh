@@ -39,7 +39,7 @@ check_docker() {
 
 # Function to check if ports are available
 check_ports() {
-    local ports=(3000 9090 9093 9100)
+    local ports=(3000 9090 9093 9100 3100 9000 9001 9115)
     local unavailable_ports=()
     
     for port in "${ports[@]}"; do
@@ -121,6 +121,10 @@ show_status() {
     echo -e "  ${GREEN}Prometheus:${NC}   http://localhost:9090"
     echo -e "  ${GREEN}Alertmanager:${NC} http://localhost:9093"
     echo -e "  ${GREEN}Node Exporter:${NC} http://localhost:9100"
+    echo -e "  ${GREEN}Loki:${NC}         http://localhost:3100"
+    echo -e "  ${GREEN}MinIO Console:${NC} http://localhost:9001 (minioadmin/minioadmin)"
+    echo -e "  ${GREEN}MinIO API:${NC}    http://localhost:9000"
+    echo -e "  ${GREEN}Blackbox Exporter:${NC} http://localhost:9115"
     echo -e "  ${GREEN}Your Backend:${NC} http://localhost:8080"
     echo -e "  ${GREEN}Your Frontend:${NC} http://localhost:3000 (when started)"
 }
@@ -164,9 +168,12 @@ check_health() {
         "http://localhost:9090/-/healthy"   # Prometheus
         "http://localhost:9093/-/healthy"   # Alertmanager
         "http://localhost:9100/metrics"     # Node Exporter
+        "http://localhost:3100/ready"       # Loki
+        "http://localhost:9000/minio/health/live"  # MinIO
+        "http://localhost:9115/-/healthy"   # Blackbox Exporter
     )
     
-    local service_names=("Grafana" "Prometheus" "Alertmanager" "Node Exporter")
+    local service_names=("Grafana" "Prometheus" "Alertmanager" "Node Exporter" "Loki" "MinIO" "Blackbox Exporter")
     local all_healthy=true
     
     for i in "${!services[@]}"; do

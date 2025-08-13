@@ -31,3 +31,47 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:9100']
     scrape_interval: 30s
+
+  # Blackbox Exporter for endpoint monitoring
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://host.docker.internal:8080/health
+          - http://host.docker.internal:8080/metrics
+          - http://host.docker.internal:8080/api/realtime/provider-info
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Transcript endpoint monitoring
+  - job_name: 'blackbox-transcript-endpoint'
+    metrics_path: /probe
+    params:
+      module: [http_transcript_endpoint]
+    static_configs:
+      - targets:
+          - http://host.docker.internal:8080/api/transcripts
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+      - source_labels: [__param_target]
+        target_label: endpoint
+        regex: '.*/([^/]+)'
+        replacement: '${1}'
+
+  # Blackbox Exporter itself
+  - job_name: 'blackbox-exporter'
+    static_configs:
+      - targets: ['blackbox-exporter:9115']
+    scrape_interval: 30s

@@ -1,0 +1,57 @@
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      preferred_ip_protocol: 'ip4'
+      valid_status_codes: [200, 201, 202, 204]
+      fail_if_ssl: false
+      fail_if_not_ssl: false
+      headers:
+        User-Agent: 'Prometheus/Blackbox Exporter'
+      tls_config:
+        insecure_skip_verify: true
+
+  http_post_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      method: POST
+      preferred_ip_protocol: 'ip4'
+      valid_status_codes: [200, 201, 202, 204]
+      fail_if_ssl: false
+      fail_if_not_ssl: false
+      headers:
+        User-Agent: 'Prometheus/Blackbox Exporter'
+        Content-Type: 'application/json'
+      body: '{"test": "health_check"}'
+      tls_config:
+        insecure_skip_verify: true
+
+  http_transcript_endpoint:
+    prober: http
+    timeout: 10s
+    http:
+      method: POST
+      preferred_ip_protocol: 'ip4'
+      valid_status_codes: [200, 201, 202, 204]
+      fail_if_ssl: false
+      fail_if_not_ssl: false
+      headers:
+        User-Agent: 'Prometheus/Blackbox Exporter'
+        Content-Type: 'application/json'
+      body: '{"sessionId": "health-check", "turnNumber": 0, "timestamp": 0, "messageType": "system", "content": "health_check", "metadata": {}, "context": {}}'
+      tls_config:
+        insecure_skip_verify: true
+
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: 'ip4'
+
+  icmp:
+    prober: icmp
+    timeout: 5s
+    icmp:
+      preferred_ip_protocol: 'ip4'

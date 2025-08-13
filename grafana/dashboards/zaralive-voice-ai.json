@@ -11,20 +11,16 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "zaralive_voice_turns_total",
-          "legendFormat": "Total Voice Turns"
+          "expr": "zaralive_requests_total",
+          "legendFormat": "Total API Requests"
         },
         {
-          "expr": "zaralive_asr_requests_total",
-          "legendFormat": "ASR Requests"
+          "expr": "zaralive_active_sessions",
+          "legendFormat": "Active Sessions"
         },
         {
-          "expr": "zaralive_llm_requests_total",
-          "legendFormat": "LLM Requests"
-        },
-        {
-          "expr": "zaralive_tts_requests_total",
-          "legendFormat": "TTS Requests"
+          "expr": "zaralive_client_session_events_total{event_type=\"start\"}",
+          "legendFormat": "Sessions Started"
         }
       ],
       "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
@@ -41,34 +37,42 @@
     },
     {
       "id": 2,
-      "title": "Voice Turn Success Rate",
+      "title": "Client-Side Latency (95th percentile)",
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(zaralive_voice_turns_total{status=\"success\"}[5m])",
-          "legendFormat": "Successful Voice Turns"
+          "expr": "histogram_quantile(0.95, zaralive_client_latency_seconds_bucket{latency_type=\"asr\"})",
+          "legendFormat": "ASR Latency (95th percentile)"
         },
         {
-          "expr": "rate(zaralive_voice_turns_total{status=\"error\"}[5m])",
-          "legendFormat": "Failed Voice Turns"
+          "expr": "histogram_quantile(0.95, zaralive_client_latency_seconds_bucket{latency_type=\"llm\"})",
+          "legendFormat": "LLM Latency (95th percentile)"
+        },
+        {
+          "expr": "histogram_quantile(0.95, zaralive_client_latency_seconds_bucket{latency_type=\"tts\"})",
+          "legendFormat": "TTS Latency (95th percentile)"
+        },
+        {
+          "expr": "histogram_quantile(0.95, zaralive_client_latency_seconds_bucket{latency_type=\"total_turn\"})",
+          "legendFormat": "Total Turn Latency (95th percentile)"
         }
       ],
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "yAxes": [
         {
-          "label": "Voice Turns per Second",
-          "unit": "reqps"
+          "label": "Duration (seconds)",
+          "unit": "s"
         }
       ]
     },
     {
       "id": 3,
-      "title": "ASR Processing Time (95th percentile)",
+      "title": "API Response Times (95th percentile)",
       "type": "graph",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(zaralive_asr_duration_seconds_bucket[5m]))",
-          "legendFormat": "ASR Processing Time"
+          "expr": "histogram_quantile(0.95, rate(zaralive_response_time_seconds_bucket[5m]))",
+          "legendFormat": "{{method}} {{endpoint}}"
         }
       ],
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
@@ -81,37 +85,49 @@
     },
     {
       "id": 4,
-      "title": "LLM Token Usage",
+      "title": "Average Latency by Step",
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(zaralive_llm_tokens_total{type=\"input\"}[5m])",
-          "legendFormat": "Input Tokens"
+          "expr": "rate(zaralive_client_latency_seconds_sum{latency_type=\"asr\"}[5m]) / rate(zaralive_client_latency_seconds_count{latency_type=\"asr\"}[5m])",
+          "legendFormat": "ASR Average Latency"
         },
         {
-          "expr": "rate(zaralive_llm_tokens_total{type=\"output\"}[5m])",
-          "legendFormat": "Output Tokens"
+          "expr": "rate(zaralive_client_latency_seconds_sum{latency_type=\"llm\"}[5m]) / rate(zaralive_client_latency_seconds_count{latency_type=\"llm\"}[5m])",
+          "legendFormat": "LLM Average Latency"
+        },
+        {
+          "expr": "rate(zaralive_client_latency_seconds_sum{latency_type=\"tts\"}[5m]) / rate(zaralive_client_latency_seconds_count{latency_type=\"tts\"}[5m])",
+          "legendFormat": "TTS Average Latency"
+        },
+        {
+          "expr": "rate(zaralive_client_latency_seconds_sum{latency_type=\"total_turn\"}[5m]) / rate(zaralive_client_latency_seconds_count{latency_type=\"total_turn\"}[5m])",
+          "legendFormat": "Total Turn Average Latency"
         }
       ],
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
       "yAxes": [
         {
-          "label": "Tokens per Second",
-          "unit": "tokensps"
+          "label": "Duration (seconds)",
+          "unit": "s"
         }
       ]
     },
     {
       "id": 5,
-      "title": "TTS Audio Generation Time",
+      "title": "Client Audio Processing",
       "type": "graph",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(zaralive_tts_duration_seconds_bucket[5m]))",
-          "legendFormat": "TTS Generation Time"
+          "expr": "histogram_quantile(0.95, zaralive_client_audio_processing_seconds_bucket{processing_type=\"playback\"})",
+          "legendFormat": "Audio Playback Time (95th percentile)"
+        },
+        {
+          "expr": "histogram_quantile(0.95, zaralive_client_audio_processing_seconds_bucket{processing_type=\"recording\"})",
+          "legendFormat": "Audio Recording Time (95th percentile)"
         }
       ],
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
       "yAxes": [
         {
           "label": "Duration (seconds)",
@@ -121,6 +137,24 @@
     },
     {
       "id": 6,
+      "title": "Request Rate by Endpoint",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(zaralive_requests_total[5m])",
+          "legendFormat": "{{method}} {{endpoint}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "yAxes": [
+        {
+          "label": "Requests per Second",
+          "unit": "reqps"
+        }
+      ]
+    },
+    {
+      "id": 7,
       "title": "Client-Side Metrics",
       "type": "stat",
       "targets": [
@@ -135,6 +169,14 @@
         {
           "expr": "zaralive_client_webrtc_state_changes_total{connection_state=\"connected\"}",
           "legendFormat": "WebRTC Connected"
+        },
+        {
+          "expr": "zaralive_client_audio_playback_total{status=\"success\"}",
+          "legendFormat": "Audio Playback Success"
+        },
+        {
+          "expr": "zaralive_client_user_interactions_total",
+          "legendFormat": "User Interactions"
         }
       ],
       "gridPos": { "h": 4, "w": 24, "x": 0, "y": 20 },
@@ -150,37 +192,37 @@
       }
     },
     {
-      "id": 7,
-      "title": "Error Rate by Operation Type",
+      "id": 8,
+      "title": "User Interaction Events",
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(zaralive_errors_total[5m])",
-          "legendFormat": "{{error_type}} - {{provider}}"
+          "expr": "rate(zaralive_client_user_interactions_total[5m])",
+          "legendFormat": "{{interaction_type}} - {{status}}"
         }
       ],
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
       "yAxes": [
         {
-          "label": "Errors per Second",
-          "unit": "errorsps"
+          "label": "Interactions per Second",
+          "unit": "interactionsps"
         }
       ]
     },
     {
-      "id": 8,
-      "title": "Active Voice Sessions",
+      "id": 9,
+      "title": "WebRTC Connection States",
       "type": "graph",
       "targets": [
         {
-          "expr": "zaralive_active_sessions",
-          "legendFormat": "Active Sessions"
+          "expr": "zaralive_client_webrtc_state_changes_total",
+          "legendFormat": "{{connection_state}} - {{ice_state}}"
         }
       ],
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
       "yAxes": [
         {
-          "label": "Number of Sessions",
+          "label": "State Changes",
           "unit": "short"
         }
       ]
