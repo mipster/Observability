@@ -67,12 +67,65 @@
             "uid": "P8E80F9AEF21F6940"
           },
           "editorMode": "code",
-          "expr": "{job=\"zaralive-transcripts\"}",
+          "expr": "{service_name=\"zaralive\", log_type=\"transcript\"}",
           "queryType": "",
           "refId": "A"
         }
       ],
       "title": "Recent Transcripts",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 10,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "editorMode": "code",
+          "expr": "{service_name=\"zaralive\", log_type=\"health\"}",
+          "queryType": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Health Checks",
       "type": "logs"
     },
     {
@@ -471,7 +524,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "ZaraLive Transcripts Dashboard",
+  "title": "ZaraLive Transcripts & Health Dashboard",
   "uid": "zaralive-transcripts",
   "version": 1,
   "weekStart": ""
